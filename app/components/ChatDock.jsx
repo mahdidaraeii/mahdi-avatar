@@ -58,11 +58,8 @@ export default function ChatDock({
       </form>
       <style jsx>{`
         .dock {
-          position: fixed;
-          bottom: 24px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: min(560px, calc(100vw - 32px));
+          flex-shrink: 0;
+          padding: 12px 16px 16px;
         }
         .dock-error {
           display: flex;

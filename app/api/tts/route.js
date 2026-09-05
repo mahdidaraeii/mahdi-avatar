@@ -9,7 +9,7 @@ const TTS_ENDPOINT = 'https://openrouter.ai/api/v1/audio/speech';
 const MODEL = 'deepgram/flux-tts:free';
 // One of ~37 voices in Deepgram's Flux catalog (flux-{name}-en); this one is
 // the example used in Deepgram's own quickstart docs.
-const VOICE = 'flux-haley-en';
+const VOICE = 'flux-cliff-en';
 
 export async function POST(request) {
   const { text } = await request.json();

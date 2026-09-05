@@ -83,8 +83,10 @@ export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 100dvh;
+          height: 100%;
           width: 100%;
+          padding: 16px;
+          box-sizing: border-box;
         }
         .avatar-ring {
           border-radius: 50%;
@@ -108,11 +110,16 @@ export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
           }
         }
         .avatar-image {
-          max-height: 68vh;
-          max-width: 90vw;
+          /* Sized off viewport units rather than % of the ring/wrap — those
+             are auto-sized to content (shrink-to-fit), so a % width here
+             would be circular. min() caps it for both the wide desktop pane
+             and the short stacked-mobile pane. */
+          width: min(320px, 45vw, 55vh);
+          height: auto;
           object-fit: contain;
           border-radius: 50%;
           user-select: none;
+          display: block;
         }
       `}</style>
     </div>

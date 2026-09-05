@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const ERROR_MESSAGES = {
   'not-allowed': 'Microphone access was denied.',
@@ -13,8 +13,14 @@ export function useSpeechRecognition({ onResult, onError, onStart, onEnd }) {
   const callbacksRef = useRef({ onResult, onError, onStart, onEnd });
   callbacksRef.current = { onResult, onError, onStart, onEnd };
 
-  const isSupported =
-    typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  // Starts false so the server render (no window) and the client's first
+  // render agree — flipping true only after mount avoids a hydration
+  // mismatch on the mic button's presence.
+  const [isSupported, setIsSupported] = useState(false);
+
+  useEffect(() => {
+    setIsSupported(!!(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
 
   useEffect(() => {
     if (!isSupported) return undefined;
