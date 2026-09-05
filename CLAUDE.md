@@ -2,6 +2,12 @@
 
 A conversational AI avatar: RAG-backed chat about a specific person, spoken aloud, with a 2D avatar that lip-syncs to the audio in real time.
 
+## Status
+
+Scaffolded: Next.js app, RAG pipeline, and text chat are working end-to-end (`npm run dev`). TTS is wired to OpenRouter's `deepgram/flux-tts:free` (see note below) — voice input and avatar mouth animation are built per the spec but not yet manually verified in a browser. Knowledge base (`knowledge/knowledge.md`) is still mostly `[FILL IN]` placeholders — real content is needed before answers will feel like "him".
+
+**TTS provider deviates from this doc's original ElevenLabs plan.** ElevenLabs' free plan blocks all API access to premade/library voices (`402 payment_required`) — a genuine plan restriction hit during setup, not a wrong voice ID. Swapped to OpenRouter's `deepgram/flux-tts:free` instead, reusing `OPENROUTER_API_KEY` (no separate key needed). It's a dedicated endpoint, not chat completions: `POST https://openrouter.ai/api/v1/audio/speech` with `{ model, input, voice, response_format }`, returning a raw audio bytestream (confirmed live — not JSON, not base64). Voice used: `flux-haley-en` (one of ~37 in Deepgram's Flux catalog, format `flux-{name}-en`). `ELEVENLABS_API_KEY` is no longer read by the app; `app/api/tts/route.js` and the **Environment variables** section below reflect the current (OpenRouter-only) reality.
+
 ## Architecture
 
 Next.js (App Router), single deployable unit, no separate backend.
@@ -14,7 +20,7 @@ user input (typed or spoken)
   → cosine similarity search over data/embeddings.json (top-k)
   → if best score < threshold: skip LLM, return canned "don't know" response
   → else: inject retrieved chunks into system prompt, call OpenRouter
-  → response text → ElevenLabs TTS → audio buffer
+  → response text → OpenRouter TTS (deepgram/flux-tts:free) → audio buffer
   → play audio through Web Audio API graph, analyser node drives
     avatar mouth state in real time via requestAnimationFrame
 ```
@@ -96,7 +102,7 @@ lib/embeddings.js                 — shared embedding + similarity logic
     (used by both build-embeddings.mjs and the API route)
 data/embeddings.json              — generated
 app/api/chat/route.js             — retrieval + OpenRouter call
-app/api/tts/route.js              — ElevenLabs call
+app/api/tts/route.js              — OpenRouter audio/speech call (deepgram/flux-tts:free)
 app/components/Avatar.jsx         — image + analyser-driven mouth swap
 app/components/ChatDock.jsx       — text input + mic button
 app/hooks/useSpeechRecognition.js
@@ -109,8 +115,7 @@ public/avatar/mouth-closed.png, mouth-open.png
 
 In `.env.local` — never commit this file.
 
-- `OPENROUTER_API_KEY`
-- `ELEVENLABS_API_KEY`
+- `OPENROUTER_API_KEY` — used for both chat completions and TTS (`deepgram/flux-tts:free` via `/audio/speech`)
 
 ## Conventions
 

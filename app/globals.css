@@ -1,0 +1,39 @@
+:root {
+  --color-bg: #0b0d10;
+  --color-surface: #14171c;
+  --color-surface-hover: #1b1f26;
+  --color-border: #23272e;
+  --color-text-primary: #e8eaed;
+  --color-text-secondary: #8a8f98;
+  --color-accent: #f2a93b;
+  --color-accent-muted: #6b5230;
+  --color-danger: #e5484d;
+  --font-heading: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+input {
+  font-family: inherit;
+}
