@@ -66,11 +66,15 @@ export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
   const ringOn = state !== 'idle' && state !== 'error';
   const ringPulse = state === 'listening';
 
+  let imageSrc = '/avatar/mouth-closed.png';
+  if (state === 'thinking') imageSrc = '/avatar/thinking.png';
+  else if (mouthOpen) imageSrc = '/avatar/mouth-open.png';
+
   return (
     <div className="avatar-wrap">
       <div className={`avatar-ring${ringOn ? ' avatar-ring--on' : ''}${ringPulse ? ' avatar-ring--pulse' : ''}`}>
         <img
-          src={mouthOpen ? '/avatar/mouth-open.png' : '/avatar/mouth-closed.png'}
+          src={imageSrc}
           alt=""
           className="avatar-image"
           draggable={false}

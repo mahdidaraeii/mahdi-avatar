@@ -33,8 +33,10 @@ export function useConversation() {
       });
       if (!chatRes.ok) throw new Error('chat request failed');
       const { reply } = await chatRes.json();
-      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
 
+      // Stay in `thinking` (message bubble not yet revealed) until the TTS
+      // audio is actually ready — text and audio must appear together, not
+      // text-then-audio.
       const ttsRes = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,6 +46,7 @@ export function useConversation() {
       const blob = await ttsRes.blob();
       const url = URL.createObjectURL(blob);
 
+      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
       setAudioUrl(url);
       setState(STATES.SPEAKING);
     } catch (err) {
@@ -78,8 +81,6 @@ export function useConversation() {
     },
   });
 
-  const submitText = useCallback((text) => runTurn(text), [runTurn]);
-
   const dismissError = useCallback(() => {
     setErrorMessage(null);
     setState(STATES.IDLE);
@@ -90,7 +91,7 @@ export function useConversation() {
     messages,
     errorMessage,
     audioUrl,
-    submitText,
+    submitText: runTurn,
     startListening,
     stopListening,
     speechSupported,

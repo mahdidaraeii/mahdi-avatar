@@ -8,16 +8,27 @@ export const runtime = 'nodejs';
 // off-topic queries top out around 0.20-0.23, on-topic ones start at 0.31+.
 const SIMILARITY_THRESHOLD = 0.25;
 const TOP_K = 4;
-const MAX_TOKENS = 200;
-// Fallback chain: 2-3 free OpenRouter models, tried in order if one fails.
-// Free-tier slugs churn often — check https://openrouter.ai/models?max_price=0
-// if these start 404ing.
-const MODELS = [
-  'google/gemma-4-31b-it:free',
-  'z-ai/glm-5.2:free',
-  'minimax/minimax-m3:free',
-];
+// Kept low to reinforce the 1-sentence (2 max) brevity constraint in the
+// system prompt — don't rely on the prompt alone to keep replies short.
+const MAX_TOKENS = 45;
+// Chat moved off OpenRouter to Gemini directly (2026-09): OpenRouter's
+// free-tier request quota is shared across all :free model calls on the
+// account, and chat + Flux TTS were both drawing from that same pool.
+// Splitting chat onto a separate provider roughly doubles effective daily
+// headroom. TTS stays on OpenRouter (deepgram/flux-tts:free) — unaffected.
+// flash-lite has thinking off by default, so MAX_TOKENS isn't silently
+// eaten by reasoning tokens the way it would be on flash/pro.
+// gemini-2.5-flash-lite is no longer available to new API keys (Google's API
+// returns a 404 recommending this exact replacement) — same flash-lite tier.
+const GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const FALLBACK_REPLY = "I don't have information about that.";
+const BASE_PROMPT = `You are Mahdi Esmaeili Daraei, speaking about yourself out loud in first person.
+
+Extract and answer with only the specific fact or facts the question actually asked for — never the full sentence or paragraph it came from, and never surrounding color, asides, or tone from the source text, even when that text is sitting right there in the context. Hard cap: 1 sentence by default. Use 2 sentences only if the question genuinely has multiple distinct parts that can't be answered in one. No preamble, don't restate the question, no "additionally" or "it's worth noting" style padding.
+
+Your answer is read aloud by a text-to-speech engine, not displayed as text someone reads. Write plain spoken prose only — no markdown, no bullet points, no asterisks, no dashes used as punctuation, no headers, nothing that only makes sense written down. Say abbreviations, acronyms, and symbols the way a person would actually say them out loud (e.g. "M.Sc." becomes "master's," not spelled out letter by letter).`;
+const NO_CONTEXT_INSTRUCTION = `No matching personal information was found for this message. If it's a greeting, casual remark, or small talk, respond naturally and briefly, in character. If it's a real question about me that you don't have information for, say plainly that you don't have that information. Never guess or invent specific facts about me.`;
 
 let embeddingsPromise = null;
 function loadEmbeddings() {
@@ -40,36 +51,32 @@ export async function POST(request) {
   const matches = topKMatches(queryVector, entries, TOP_K);
 
   const bestScore = matches[0]?.score ?? 0;
-  if (bestScore < SIMILARITY_THRESHOLD) {
-    return Response.json({ reply: FALLBACK_REPLY });
-  }
+  const hasContext = bestScore >= SIMILARITY_THRESHOLD;
 
-  const context = matches.map((m) => m.entry.text).join('\n\n---\n\n');
-  const systemPrompt = `You are Mahdi Esmaeili Daraei, answering questions about yourself in first person. Answer using only the context below — don't invent details that aren't there. Be concise: 2-4 sentences.\n\nContext:\n${context}`;
+  const systemPrompt = hasContext
+    ? `${BASE_PROMPT}\n\nAnswer using only the context below — never invent details that aren't there.\n\nContext:\n${matches.map((m) => m.entry.text).join('\n\n---\n\n')}`
+    : `${BASE_PROMPT}\n\n${NO_CONTEXT_INSTRUCTION}`;
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+  const response = await fetch(GEMINI_ENDPOINT, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+      'x-goog-api-key': process.env.GEMINI_API_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      models: MODELS,
-      max_tokens: MAX_TOKENS,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message },
-      ],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      contents: [{ role: 'user', parts: [{ text: message }] }],
+      generationConfig: { maxOutputTokens: MAX_TOKENS },
     }),
   });
 
   if (!response.ok) {
-    console.error('OpenRouter error', response.status, await response.text());
+    console.error('Gemini error', response.status, await response.text());
     return Response.json({ error: 'chat completion failed' }, { status: 502 });
   }
 
   const data = await response.json();
-  const reply = data.choices?.[0]?.message?.content?.trim() || FALLBACK_REPLY;
+  const reply = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || FALLBACK_REPLY;
 
   return Response.json({ reply });
 }

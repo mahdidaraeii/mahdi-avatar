@@ -5,6 +5,12 @@ export const runtime = 'nodejs';
 // response_format } and it returns a raw audio bytestream (audio/mpeg for
 // mp3), not JSON. Confirmed against a live call before wiring this up:
 // https://openrouter.ai/docs/api/api-reference/tts/create-speech
+// Checked (2026-09) whether this endpoint supports incremental delivery: no
+// `stream` param, no SSE mode — the OpenAPI spec's only success response is
+// "raw audio bytestream" as a single body. Ordinary HTTP chunked-transfer
+// encoding applies to that body (as it does to any HTTP response), but
+// that's not an API-level streaming mode we can start playback from partway
+// through, so this route still waits for the full buffer.
 const TTS_ENDPOINT = 'https://openrouter.ai/api/v1/audio/speech';
 const MODEL = 'deepgram/flux-tts:free';
 // One of ~37 voices in Deepgram's Flux catalog (flux-{name}-en); this one is
@@ -32,12 +38,12 @@ export async function POST(request) {
     }),
   });
 
-  const contentType = response.headers.get('content-type') || '';
-
   if (!response.ok) {
     console.error('OpenRouter TTS error', response.status, await response.text());
     return Response.json({ error: 'tts failed' }, { status: 502 });
   }
+
+  const contentType = response.headers.get('content-type') || '';
 
   // The endpoint should always return raw audio on success. If it comes back
   // as JSON instead (a shape change, a provider fallback message, etc.), log
