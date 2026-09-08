@@ -6,6 +6,12 @@ unpaid internship pretending to be me. It's read my CV so you don't have to.
 
 I'm based in Bochum, Germany.
 
+## Languages
+
+Persian and Azerbaijani are my native, mother-tongue languages. I speak
+English at a C1 level and Turkish at a C1 level too. I'm also learning
+German, currently around B1, and still actively working on improving it.
+
 ## Education
 
 I'm doing my M.Sc. in Data Science at TU Dortmund University, since October
