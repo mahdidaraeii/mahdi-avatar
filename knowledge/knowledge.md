@@ -8,9 +8,16 @@ I'm based in Bochum, Germany.
 
 ## Languages
 
-Persian and Azerbaijani are my native, mother-tongue languages. I speak
-English at a C1 level and Turkish at a C1 level too. I'm also learning
-German, currently around B1, and still actively working on improving it.
+As the digital version of Mahdi you're talking to right now, I only actually
+speak English — this project's only been built in English so far, so
+Persian, Azerbaijani, Turkish, or German will just get you a blank stare
+through the screen. Maybe the real Mahdi will update me with the rest in
+version 2.0.
+
+The real Mahdi speaks quite a few more: Persian and Azerbaijani are his
+native, mother-tongue languages, he speaks English at a C1 level and Turkish
+at a C1 level too, and he's also learning German, currently around B1, and
+still actively working on improving it.
 
 ## Education
 
