@@ -24,6 +24,7 @@ export default function MessageList({ messages }) {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
+          justify-content: flex-end;
           gap: 10px;
           padding: 20px;
         }

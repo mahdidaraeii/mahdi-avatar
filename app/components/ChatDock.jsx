@@ -2,6 +2,13 @@
 
 import { useState } from 'react';
 
+const SUGGESTIONS = [
+  'What do you study?',
+  'What have you built?',
+  'What are you looking for in a role?',
+  'Where are you based?',
+];
+
 export default function ChatDock({
   state,
   speechSupported,
@@ -9,6 +16,7 @@ export default function ChatDock({
   onStartListening,
   errorMessage,
   onDismissError,
+  showSuggestions,
 }) {
   const [value, setValue] = useState('');
 
@@ -22,8 +30,28 @@ export default function ChatDock({
     setValue('');
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    if (busy || listening) return;
+    onSubmitText(suggestion);
+  };
+
   return (
     <div className="dock">
+      {showSuggestions && (
+        <div className="dock-suggestions">
+          {SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className="dock-chip"
+              onClick={() => handleSuggestionClick(suggestion)}
+              disabled={busy || listening}
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+      )}
       {errorMessage && (
         <div className="dock-error" role="alert">
           <span>{errorMessage}</span>
@@ -60,6 +88,31 @@ export default function ChatDock({
         .dock {
           flex-shrink: 0;
           padding: 12px 16px 16px;
+        }
+        .dock-suggestions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+        .dock-chip {
+          border: 1px solid var(--color-border);
+          border-radius: 999px;
+          background: var(--color-surface);
+          color: var(--color-text-secondary);
+          cursor: pointer;
+          padding: 6px 12px;
+          font-size: 13px;
+          line-height: 1.3;
+        }
+        .dock-chip:hover:not(:disabled) {
+          background: var(--color-surface-hover);
+          color: var(--color-text-primary);
+          border-color: var(--color-accent-muted);
+        }
+        .dock-chip:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
         .dock-error {
           display: flex;

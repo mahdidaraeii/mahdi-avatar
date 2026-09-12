@@ -22,6 +22,7 @@ export default function ChatPane({
         onStartListening={onStartListening}
         errorMessage={errorMessage}
         onDismissError={onDismissError}
+        showSuggestions={messages.length === 0}
       />
       <style jsx>{`
         .chat-pane {

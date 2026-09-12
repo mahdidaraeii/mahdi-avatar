@@ -40,7 +40,8 @@ export async function POST(request) {
 
   if (!response.ok) {
     console.error('OpenRouter TTS error', response.status, await response.text());
-    return Response.json({ error: 'tts failed' }, { status: 502 });
+    const status = response.status === 429 ? 429 : 502;
+    return Response.json({ error: 'tts failed' }, { status });
   }
 
   const contentType = response.headers.get('content-type') || '';

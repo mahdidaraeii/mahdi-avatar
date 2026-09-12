@@ -72,7 +72,8 @@ export async function POST(request) {
 
   if (!response.ok) {
     console.error('Gemini error', response.status, await response.text());
-    return Response.json({ error: 'chat completion failed' }, { status: 502 });
+    const status = response.status === 429 ? 429 : 502;
+    return Response.json({ error: 'chat completion failed' }, { status });
   }
 
   const data = await response.json();

@@ -31,7 +31,7 @@ export function useConversation() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed }),
       });
-      if (!chatRes.ok) throw new Error('chat request failed');
+      if (!chatRes.ok) throw new Error('chat request failed', { cause: { status: chatRes.status } });
       const { reply } = await chatRes.json();
 
       // Stay in `thinking` (message bubble not yet revealed) until the TTS
@@ -42,7 +42,7 @@ export function useConversation() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: reply }),
       });
-      if (!ttsRes.ok) throw new Error('tts request failed');
+      if (!ttsRes.ok) throw new Error('tts request failed', { cause: { status: ttsRes.status } });
       const blob = await ttsRes.blob();
       const url = URL.createObjectURL(blob);
 
@@ -51,7 +51,11 @@ export function useConversation() {
       setState(STATES.SPEAKING);
     } catch (err) {
       console.error(err);
-      setErrorMessage('Something went wrong. Please try again.');
+      const message =
+        err?.cause?.status === 429
+          ? "Running into a request limit right now — try again in a moment."
+          : 'Something went wrong. Please try again.';
+      setErrorMessage(message);
       setState(STATES.ERROR);
     }
   }, []);
