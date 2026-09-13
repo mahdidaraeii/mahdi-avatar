@@ -11,7 +11,7 @@ Type or speak a question. The app embeds it locally, retrieves the most relevant
 ## Stack
 
 - **Next.js** (App Router) — single deployable app, no separate backend
-- **RAG** — `@xenova/transformers` (`all-MiniLM-L6-v2`) embeds the knowledge base at build time; queries are embedded the same way at request time and matched by cosine similarity
+- **RAG** — `@xenova/transformers` (`all-MiniLM-L6-v2`) embeds the knowledge base one paragraph at a time; queries are embedded the same way at request time and ranked by cosine similarity blended with an IDF-weighted keyword overlap, which keeps rare proper nouns (project names, tools) findable where dense vectors alone wash them out. The index is fingerprinted, so editing the knowledge base rebuilds it automatically on the next question
 - **Gemini** (`gemini-3.5-flash-lite`) — answers grounded in retrieved context, kept to one short spoken sentence
 - **Flux TTS via OpenRouter** (`deepgram/flux-tts:free`) — turns the reply into audio
 - **Web Audio API** — an `AnalyserNode` reads live amplitude off the playing audio to drive mouth-open/mouth-closed frames in real time

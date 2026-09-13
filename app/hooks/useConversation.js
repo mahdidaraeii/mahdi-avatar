@@ -17,6 +17,13 @@ export function useConversation() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
 
+  const releaseAudio = useCallback(() => {
+    setAudioUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
+
   const runTurn = useCallback(async (text) => {
     const trimmed = text?.trim();
     if (!trimmed) return;
@@ -56,19 +63,17 @@ export function useConversation() {
           ? "Running into a request limit right now — try again in a moment."
           : 'Something went wrong. Please try again.';
       setErrorMessage(message);
+      releaseAudio();
       setState(STATES.ERROR);
     }
-  }, []);
+  }, [releaseAudio]);
 
   const handleSpeakingEnded = useCallback(() => {
-    setAudioUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    releaseAudio();
     setState(STATES.IDLE);
-  }, []);
+  }, [releaseAudio]);
 
-  const { isSupported: speechSupported, startListening, stopListening } = useSpeechRecognition({
+  const { isSupported: speechSupported, startListening } = useSpeechRecognition({
     onStart: () => {
       setErrorMessage(null);
       setState(STATES.LISTENING);
@@ -97,7 +102,6 @@ export function useConversation() {
     audioUrl,
     submitText: runTurn,
     startListening,
-    stopListening,
     speechSupported,
     handleSpeakingEnded,
     dismissError,

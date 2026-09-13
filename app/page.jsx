@@ -1,7 +1,8 @@
 'use client';
 
 import Avatar from './components/Avatar';
-import ChatPane from './components/ChatPane';
+import MessageList from './components/MessageList';
+import ChatDock from './components/ChatDock';
 import { useConversation } from './hooks/useConversation';
 
 export default function Page() {
@@ -22,15 +23,16 @@ export default function Page() {
       <div className="avatar-pane">
         <Avatar state={state} audioUrl={audioUrl} onSpeakingEnded={handleSpeakingEnded} />
       </div>
-      <div className="chat-pane-wrap">
-        <ChatPane
+      <div className="chat-pane">
+        <MessageList messages={messages} />
+        <ChatDock
           state={state}
-          messages={messages}
           speechSupported={speechSupported}
           onSubmitText={submitText}
           onStartListening={startListening}
           errorMessage={errorMessage}
           onDismissError={dismissError}
+          showSuggestions={messages.length === 0}
         />
       </div>
       <style jsx>{`
@@ -46,11 +48,13 @@ export default function Page() {
           overflow: hidden;
           border-right: 1px solid var(--color-border);
         }
-        .chat-pane-wrap {
+        .chat-pane {
           flex: 0 0 55%;
           max-width: 55%;
           min-width: 0;
           min-height: 0;
+          display: flex;
+          flex-direction: column;
         }
         @media (max-width: 768px) {
           .layout {
@@ -62,7 +66,7 @@ export default function Page() {
             border-right: none;
             border-bottom: 1px solid var(--color-border);
           }
-          .chat-pane-wrap {
+          .chat-pane {
             flex: 1;
             max-width: 100%;
           }

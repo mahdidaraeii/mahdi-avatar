@@ -103,17 +103,9 @@ setting.
 Outside of work I read, watch series, and play the violin. I go to the opera
 and symphonic concerts when I can. I also play basketball and ping-pong.
 
-## Fun facts
-
-[FILL IN: skipped for now — add 1-3 here whenever something comes to mind.]
-
 ## Contact
 
 You can reach me by email at mahdi.daraei@tu-dortmund.de.
-
-[FILL IN: LinkedIn and GitHub URLs — I could see the links were on your CV
-but couldn't extract the actual URLs from the PDF, only the link text.
-Paste them in directly.]
 
 ---
 

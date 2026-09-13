@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 const RMS_THRESHOLD = 0.045;
 const SMOOTHING = 0.3; // weight given to the new raw sample each frame
+// How long to wait for playback to actually begin before giving up on it.
+const STALL_TIMEOUT_MS = 10000;
 
 export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
   const audioRef = useRef(null);
@@ -35,8 +37,11 @@ export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
     const analyser = analyserRef.current;
     const data = new Uint8Array(analyser.fftSize);
 
+    // If playback never starts (autoplay policy, decode failure), `ended`
+    // never fires — release the state machine instead of stranding it in
+    // `speaking` with the input and mic disabled for good.
     if (audioCtx.state === 'suspended') audioCtx.resume();
-    audioEl.play().catch(() => {});
+    audioEl.play().catch(() => onSpeakingEnded?.());
 
     const tick = () => {
       analyser.getByteTimeDomainData(data);
@@ -54,10 +59,26 @@ export default function Avatar({ state, audioUrl, onSpeakingEnded }) {
 
     const handleEnded = () => onSpeakingEnded?.();
     audioEl.addEventListener('ended', handleEnded);
+    audioEl.addEventListener('error', handleEnded);
+
+    // A stalled element fires neither `ended` nor `error` — Chrome suspends
+    // the media pipeline for a hidden tab, so audio that arrives while the
+    // user is looking elsewhere can sit at readyState 0 indefinitely. Without
+    // this the UI stays stuck in `speaking` with the input and mic disabled
+    // until a reload.
+    const watchdog = setTimeout(() => {
+      if (audioEl.paused || audioEl.currentTime === 0) handleEnded();
+    }, STALL_TIMEOUT_MS);
+    const clearWatchdog = () => clearTimeout(watchdog);
+    audioEl.addEventListener('playing', clearWatchdog, { once: true });
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      clearTimeout(watchdog);
       audioEl.removeEventListener('ended', handleEnded);
+      audioEl.removeEventListener('error', handleEnded);
+      audioEl.removeEventListener('playing', clearWatchdog);
+      audioEl.pause();
       smoothedRef.current = 0;
       setMouthOpen(false);
     };

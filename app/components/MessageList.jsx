@@ -24,9 +24,14 @@ export default function MessageList({ messages }) {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          justify-content: flex-end;
           gap: 10px;
           padding: 20px;
+        }
+        /* Bottom-anchors a short conversation. Doing this with
+           justify-content: flex-end instead would make overflowing content
+           above the scroll container's start edge unreachable. */
+        .bubble:first-child {
+          margin-top: auto;
         }
         .bubble {
           max-width: 75%;
